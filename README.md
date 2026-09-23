@@ -21,9 +21,9 @@ This package talks to the hosted Mitosis Excel Templater API, so the heavy Excel
 
 You can try the templater **without installing anything**: upload a template, paste your data and download the result straight from the browser.
 
-👉 **[Open the live demo](https://www.mitosis-excel-templater.dev/docs)**
+👉 **[Open the live demo](https://www.mitosis-excel-templater.dev)**
 
-The same page doubles as an API playground that pre-fills your own API key once you are signed in.
+👉 **[Open the API playground](https://www.mitosis-excel-templater.dev/docs)** — it pre-fills your own API key once you are signed in.
 
 ## Installation
 
@@ -311,7 +311,8 @@ To get it:
 ## Links
 
 - 🌐 **Website** — [mitosis-excel-templater.dev](https://www.mitosis-excel-templater.dev)
-- ▶️ **Live demo & API playground** — [mitosis-excel-templater.dev/docs](https://www.mitosis-excel-templater.dev/docs)
+- ▶️ **Live demo** — [mitosis-excel-templater.dev](https://www.mitosis-excel-templater.dev)
+- 🧪 **API playground** — [mitosis-excel-templater.dev/docs](https://www.mitosis-excel-templater.dev/docs)
 - 🔑 **Dashboard & API key** — [mitosis-excel-templater.dev/dashboard](https://www.mitosis-excel-templater.dev/dashboard)
 - 💳 **Pricing** — [mitosis-excel-templater.dev/pricing](https://www.mitosis-excel-templater.dev/pricing)
 - 🐛 **Issues** — [github.com/Loulou54/mitosis-excel-templater-client/issues](https://github.com/Loulou54/mitosis-excel-templater-client/issues)
