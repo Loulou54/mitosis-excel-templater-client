@@ -1,0 +1,64 @@
+{
+  "name": "mitosis-excel-templater-client",
+  "version": "0.1.0",
+  "description": "Official Node.js/TypeScript client for the Mitosis Excel Templater API. Generate XLSX files from a formatted Excel template with replaceable tags, without bundling an Excel engine.",
+  "main": "dist/cjs/index.js",
+  "module": "dist/esm/index.js",
+  "types": "dist/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/types/index.d.ts",
+      "import": "./dist/esm/index.js",
+      "require": "./dist/cjs/index.js",
+      "default": "./dist/cjs/index.js"
+    }
+  },
+  "files": [
+    "/dist"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "clean": "node -e \"require('fs').rmSync('dist',{ recursive: true, force: true })\"",
+    "build:cjs": "tsc -p tsconfig.cjs.json",
+    "build:esm": "tsc -p tsconfig.esm.json && node -e \"require('fs').writeFileSync('dist/esm/package.json', JSON.stringify({ type: 'module' }, null, 2))\"",
+    "build:types": "tsc -p tsconfig.types.json",
+    "build": "npm run clean && npm run build:cjs && npm run build:esm && npm run build:types",
+    "test": "mocha --reporter spec --require ts-node/register \"src/**/*.test.ts\"",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "excel",
+    "xls",
+    "xlsx",
+    "generation",
+    "templating",
+    "template",
+    "mustache",
+    "api",
+    "client",
+    "sdk",
+    "spreadsheet",
+    "report"
+  ],
+  "author": "Louis Durand",
+  "license": "MIT",
+  "homepage": "https://www.mitosis-excel-templater.dev",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Loulou54/mitosis-excel-templater-client.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Loulou54/mitosis-excel-templater-client/issues"
+  },
+  "devDependencies": {
+    "@types/chai": "^4.3.20",
+    "@types/mocha": "^10.0.9",
+    "@types/node": "^20.17.0",
+    "chai": "^4.5.0",
+    "mocha": "^11.0.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.0"
+  }
+}

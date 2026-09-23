@@ -1,0 +1,6 @@
+dist
+node_modules
+test-resources/generated
+.npmrc
+.env
+*.tgz
