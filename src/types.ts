@@ -63,7 +63,10 @@ export interface TemplateRef {
   templateId: string;
 }
 
-/** Anything accepted as a template: raw bytes, a local path, an http(s) URL, or a stored template id. */
+/**
+ * Anything accepted as a template: raw bytes, a stored template id, or a string - read from the file
+ * system on Node.js, and fetched as a URL in the browser.
+ */
 export type TemplateSource = Buffer | ArrayBuffer | Uint8Array | string | TemplateRef;
 
 export type FetchLike = (input: string, init?: RequestInit) => Promise<Response>;

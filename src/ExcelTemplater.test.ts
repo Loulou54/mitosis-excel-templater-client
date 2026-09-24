@@ -1,4 +1,5 @@
 import { expect } from 'chai';
+import { resolveObjectURL } from 'node:buffer';
 import { ExcelTemplater } from './ExcelTemplater.js';
 import { configure, resetConfig, API_KEY_ENV_VAR } from './config.js';
 import {
@@ -10,8 +11,10 @@ import {
   TemplateSyntaxError,
 } from './errors.js';
 import {
+  BrowserStub,
   binaryResponse,
   createFetchStub,
+  fakeBrowser,
   formFileBytes,
   jsonResponse,
   textResponse,
@@ -130,9 +133,58 @@ describe('ExcelTemplater', () => {
     });
   });
 
+  describe('browser mode', () => {
+    let browser: BrowserStub;
+
+    beforeEach(() => {
+      browser = fakeBrowser();
+    });
+
+    afterEach(() => {
+      browser.restore();
+    });
+
+    it('fetches a string template instead of reading it from the file system', async () => {
+      const stub = createFetchStub(() => binaryResponse(TEMPLATE_BYTES));
+      const templater = new ExcelTemplater('templates/cars.xlsx', {
+        apiKey: API_KEY,
+        fetch: stub.fetch,
+      });
+
+      await templater.saveAsExcel({});
+
+      expect(stub.calls[0].url).to.equal('templates/cars.xlsx');
+      expect(stub.calls[0].method).to.equal('GET');
+      expect(await formFileBytes(stub.lastCall().form!)).to.deep.equal(TEMPLATE_BYTES);
+    });
+
+    it('downloads the generated workbook instead of writing it to disk', async () => {
+      const stub = createFetchStub(binaryResponse(TEMPLATE_BYTES));
+      const templater = new ExcelTemplater(TEMPLATE_BYTES, { apiKey: API_KEY, fetch: stub.fetch });
+
+      await templater.saveAsExcel({}, 'out/cars.xlsx');
+
+      expect(browser.downloads).to.have.length(1);
+      expect(browser.downloads[0].fileName).to.equal('cars.xlsx');
+      const blob = resolveObjectURL(browser.downloads[0].url);
+      expect(new Uint8Array(await blob!.arrayBuffer())).to.deep.equal(TEMPLATE_BYTES);
+    });
+
+    it('downloads the generated type as a text file', async () => {
+      const stub = createFetchStub(textResponse('export type CarsData = { name: string };'));
+      const templater = new ExcelTemplater(TEMPLATE_BYTES, { apiKey: API_KEY, fetch: stub.fetch });
+
+      await templater.generateTemplateDataTypescriptFile('types/CarsData.ts');
+
+      expect(browser.downloads[0].fileName).to.equal('CarsData.d.ts');
+      const blob = resolveObjectURL(browser.downloads[0].url);
+      expect(blob!.type).to.equal('text/plain; charset=utf-8');
+    });
+  });
+
   describe('generateSampleData', () => {
-    it('unwraps the sampleData envelope', async () => {
-      const stub = createFetchStub(jsonResponse({ sampleData: { name: 'name', year: 0 } }));
+    it('returns the sample data returned by the API', async () => {
+      const stub = createFetchStub(jsonResponse({ name: 'name', year: 0 }));
       const templater = new ExcelTemplater(TEMPLATE_BYTES, { apiKey: API_KEY, fetch: stub.fetch });
 
       const data = await templater.generateSampleData();
@@ -143,8 +195,8 @@ describe('ExcelTemplater', () => {
   });
 
   describe('generateTemplateDataJsonSchema', () => {
-    it('unwraps the schema envelope and forwards propsAreOptional', async () => {
-      const stub = createFetchStub(jsonResponse({ schema: { type: 'object' }, propsAreOptional: true }));
+    it('returns the schema returned by the API and forwards propsAreOptional', async () => {
+      const stub = createFetchStub(jsonResponse({ type: 'object' }));
       const templater = new ExcelTemplater(TEMPLATE_BYTES, { apiKey: API_KEY, fetch: stub.fetch });
 
       const schema = await templater.generateTemplateDataJsonSchema(undefined, true);

@@ -60,3 +60,37 @@ export async function formFileBytes(form: FormData, field = 'file'): Promise<Uin
   }
   return new Uint8Array(await entry.arrayBuffer());
 }
+
+export interface BrowserStub {
+  /** Every download the client triggered, in order. */
+  downloads: Array<{ fileName: string; url: string }>;
+  restore(): void;
+}
+
+/** Installs the minimal `window` the client probes for, to exercise the browser branches on Node. */
+export function fakeBrowser(): BrowserStub {
+  const downloads: Array<{ fileName: string; url: string }> = [];
+  const globals = globalThis as { window?: unknown };
+
+  globals.window = {
+    // A non local hostname keeps the development-only api key exposure warning quiet.
+    location: { hostname: 'app.example.com' },
+    document: {
+      createElement: () => {
+        const link = {
+          href: '',
+          download: '',
+          click: () => downloads.push({ fileName: link.download, url: link.href }),
+        };
+        return link;
+      },
+    },
+  };
+
+  return {
+    downloads,
+    restore: () => {
+      delete globals.window;
+    },
+  };
+}

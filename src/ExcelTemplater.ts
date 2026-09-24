@@ -5,6 +5,7 @@ import {
   writeFile,
 } from './fileIo.js';
 import { request, requestJson, requestText } from './http.js';
+import { toBuffer } from './runtime.js';
 import { appendTemplate, isTemplateRef, readTemplateBytes } from './templateSource.js';
 import type { ClientOptions, TemplateData, TemplateRef, TemplateSource } from './types.js';
 
@@ -104,8 +105,9 @@ export class ExcelTemplater {
   constructor(excelFileAsBuffer: Buffer | ArrayBuffer | Uint8Array, options?: ClientOptions);
 
   /**
-   * Creates an ExcelTemplater for the Excel template file located at the given path or http(s) URL.
-   * @param templateFileToFetch a local file path, or a URL the template can be downloaded from.
+   * Creates an ExcelTemplater for the Excel template file located at the given path or URL.
+   * @param templateFileToFetch a local file path on Node.js, or a URL the template is fetched from.
+   *   In the browser there is no file system, so the string is always fetched, relative to the page.
    * @param options (optional) API key and other client options.
    */
   constructor(templateFileToFetch: string, options?: ClientOptions);
@@ -127,6 +129,7 @@ export class ExcelTemplater {
    * Generates the typescript type corresponding to the fields found in the given Excel template file.
    * You can use this generated file in your source code for type-checking your input TemplateData!
    * @param saveResultToFile (optional) the path to the .ts file where you want to save the generated type.
+   *   (As a file in the file system for Node.js, or as a download in the browser.)
    * @param propsAreOptional (optional, default: false) true to set all properties on the generated type as optional.
    * @returns a string containing the generated type.
    */
@@ -155,6 +158,7 @@ export class ExcelTemplater {
   /**
    * Generates a JSON Schema (Draft 7) corresponding to the fields found in the given Excel template file.
    * @param saveResultToFile (optional) the path to the .schema.json file where you want to save the generated schema.
+   *   (As a file in the file system for Node.js, or as a download in the browser.)
    * @param propsAreOptional (optional, default: false) true to set all properties on the generated schema as optional.
    * @returns an object containing the generated JSON Schema.
    */
@@ -163,7 +167,7 @@ export class ExcelTemplater {
     propsAreOptional = false,
   ): Promise<object> {
     const form = await this.buildForm(propsAreOptional);
-    const { schema } = await requestJson<{ schema: object }>({
+    const schema = await requestJson<object>({
       path: '/api/generate-template-data-json-schema',
       method: 'POST',
       body: form,
@@ -186,20 +190,20 @@ export class ExcelTemplater {
    */
   public async generateSampleData(): Promise<TemplateData> {
     const form = await this.buildForm();
-    const { sampleData } = await requestJson<{ sampleData: TemplateData }>({
+    return requestJson<TemplateData>({
       path: '/api/generate-sample-data',
       method: 'POST',
       body: form,
       options: this.options,
     });
-    return sampleData;
   }
 
   /**
    * Generates an Excel file based on the template, populated with the templateData, and saves it under fileName.
    * @param templateData data structure containing the data to insert in the given Excel template.
-   * @param fileName (optional) the path under which the generated Excel file will be saved.
-   * @return a Buffer containing the generated Excel file.
+   * @param fileName (optional) the path or file name under which the generated Excel file will be saved.
+   *   (As a file in the file system for Node.js, or as a download in the browser.)
+   * @return a Buffer containing the generated Excel file, or a Uint8Array in the browser.
    */
   public async saveAsExcel(templateData: TemplateData, fileName?: string): Promise<Buffer> {
     const form = await this.buildForm();
@@ -211,7 +215,7 @@ export class ExcelTemplater {
       body: form,
       options: this.options,
     });
-    const buffer = Buffer.from(await response.arrayBuffer());
+    const buffer = toBuffer(await response.arrayBuffer());
 
     if (fileName) {
       await writeFile(fileName, buffer);

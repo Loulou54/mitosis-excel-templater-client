@@ -16,6 +16,7 @@ This package talks to the hosted Mitosis Excel Templater API, so the heavy Excel
 - **Fully typed** — ships its own TypeScript declarations, plus tooling to generate a type for each of your templates.
 - **Same interface as the engine** — identical to the `@mitosis/mitosis-excel-templater` package, so moving between hosted and offline generation is a one-line import change.
 - **Dual CJS / ESM build**, Node.js 18 or later.
+- **Runs in the browser too** — but it ships your API key with your bundle, see [Browser usage](#browser-usage).
 
 ## Live demo
 
@@ -45,7 +46,30 @@ npm install mitosis-excel-templater-client
 
 5. **Pick a plan** on the [pricing page](https://www.mitosis-excel-templater.dev/pricing) when the free tier gets tight. The free plan works out of the box, no card required.
 
-> ⚠️ **Keep your API key server-side.** It grants access to your quota and to the templates stored on your account. Never commit it, and never ship it inside a browser bundle or a mobile app — this client is meant to run on your server. If a key leaks, regenerate it from the dashboard.
+> ⚠️ **Keep your API key server-side.** It grants access to your quota and to the templates stored on your account. Never commit it, and avoid shipping it inside a browser bundle or a mobile app. If a key leaks, regenerate it from the dashboard. The client *does* run in the browser, but at that cost — read [Browser usage](#browser-usage) before doing so.
+
+## Browser usage
+
+This client is **browser compatible**: it only uses `fetch`, `FormData` and `Blob`, so it works in any modern browser and bundler, with no Node.js polyfill.
+
+> 🔐 **But calling the API from the browser exposes your API key.** Anything the browser sends, a user can read: your key ends up in the network tab and in your bundle, and with it anyone can burn your quota and read, overwrite or delete the templates stored on your account. There is no safe way around it — a hosted API call needs a key, and a key in a browser is a public key.
+
+So, for browser applications, pick one of these instead:
+
+1. **Generate locally with the private npm package** *(recommended)* — `@mitosis/mitosis-excel-templater` embeds the engine, runs entirely in the browser and needs **no API key at all**, since nothing leaves the page. Same interface, one-line import change. Subscribe on the [pricing page](https://www.mitosis-excel-templater.dev/pricing) and see [Offline generation](#offline-generation-without-any-api-call).
+2. **Call the API from your own backend** — keep this client on your server, and expose your own endpoint to the browser.
+
+Using this client in the browser is fine for a prototype, an internal tool behind your own network, or a key you are happy to rotate often. In that case, note that:
+
+- the API key must be passed explicitly (`new ExcelTemplater(source, { apiKey })` or `configure({ apiKey })`), as there is no environment variable to read;
+- there is no file system: a template given as a string is **fetched** as a URL, relative to the page (`new ExcelTemplater('templates/cars.xlsx')` fetches `/templates/cars.xlsx`), and the `fileName` argument of `saveAsExcel` triggers a **download** instead of writing to disk;
+- `saveAsExcel` resolves with a `Uint8Array` instead of a `Buffer`, ready to be wrapped in a `Blob` for download;
+- a warning about the key exposure is printed to the console **in development mode only**, never in a production build.
+
+```ts
+const bytes = await new ExcelTemplater({ templateId: 'cars' }, { apiKey }).saveAsExcel(templateData);
+const url = URL.createObjectURL(new Blob([bytes], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }));
+```
 
 ## Quick start
 
@@ -272,7 +296,7 @@ console.log(await getEngineVersion()); // { name: '@mitosis/mitosis-excel-templa
 
 ## Offline generation, without any API call
 
-If you would rather **not** send your templates and data over the network — or you need to generate files in an air-gapped environment, in a browser, or without any per-call quota — the underlying engine is also distributed as a private npm package:
+If you would rather **not** send your templates and data over the network — or you need to generate files in an air-gapped environment, in a browser without exposing an API key, or without any per-call quota — the underlying engine is also distributed as a private npm package:
 
 **`@mitosis/mitosis-excel-templater`** — the same templating engine, running entirely on your own machine. No API calls, no rate limit, and it works in the browser as well as in Node.js.
 

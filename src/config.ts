@@ -3,6 +3,9 @@ import type { ClientOptions } from './types.js';
 /** Default host of the hosted Mitosis Excel Templater API. */
 export const DEFAULT_BASE_URL = 'https://www.mitosis-excel-templater.dev';
 
+/** Where plans, including the private npm package, are listed. */
+export const PRICING_URL = `${DEFAULT_BASE_URL}/pricing`;
+
 /** Environment variable read as a last-resort source for the API key. */
 export const API_KEY_ENV_VAR = 'MITOSIS_EXCEL_TEMPLATER_API_KEY';
 

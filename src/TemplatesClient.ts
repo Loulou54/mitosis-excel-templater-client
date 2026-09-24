@@ -34,7 +34,7 @@ export class TemplatesClient {
   /**
    * Stores a template under the given id, replacing it if the id already exists.
    * @param templateId the identifier you will reference the template with.
-   * @param template the template as a Buffer, a local file path or an http(s) URL.
+   * @param template the template as a Buffer, a local file path (Node.js) or a URL (fetched in the browser).
    */
   public async uploadTemplate(
     templateId: string,
@@ -56,6 +56,7 @@ export class TemplatesClient {
    * Downloads a stored template.
    * @param templateId the identifier of the stored template.
    * @param fileName (optional) the path under which the template will be saved.
+   *   (As a file in the file system for Node.js, or as a download in the browser.)
    */
   public async downloadTemplate(templateId: string, fileName?: string): Promise<Buffer> {
     const buffer = await requestBuffer({

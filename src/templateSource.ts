@@ -1,6 +1,7 @@
 import { readFile } from './fileIo.js';
 import type { ClientOptions, TemplateRef, TemplateSource } from './types.js';
-import { request } from './http.js';
+import { fetchResource } from './http.js';
+import { isBrowser } from './runtime.js';
 
 export const XLSX_MIME_TYPE =
   'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
@@ -34,7 +35,8 @@ export function templateFileName(source: TemplateSource): string {
 }
 
 /**
- * Reads the template bytes from wherever they live: memory, the local file system, or an http(s) URL.
+ * Reads the template bytes from wherever they live: memory, an http(s) URL, the local file system
+ * on Node.js, or a URL fetched from the page in the browser.
  * Stored templates (`{ templateId }`) are never read locally - the API resolves them server side.
  */
 export async function readTemplateBytes(
@@ -45,15 +47,11 @@ export async function readTemplateBytes(
     return source instanceof ArrayBuffer ? new Uint8Array(source) : new Uint8Array(source.buffer, source.byteOffset, source.byteLength);
   }
   if (typeof source === 'string') {
-    if (!isHttpUrl(source)) {
+    // In the browser there is no file system, so a bare path is a resource served next to the page.
+    if (!isHttpUrl(source) && !isBrowser()) {
       return readFile(source);
     }
-    const response = await request({
-      path: '',
-      method: 'GET',
-      options: { ...options, baseUrl: source },
-      requiresApiKey: false,
-    });
+    const response = await fetchResource(source, options);
     return new Uint8Array(await response.arrayBuffer());
   }
   throw new TypeError(
