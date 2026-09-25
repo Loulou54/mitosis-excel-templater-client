@@ -1,6 +1,6 @@
 {
   "name": "mitosis-excel-templater-client",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "Official Node.js/TypeScript client for the Mitosis Excel Templater API. Generate XLSX files from a formatted Excel template with replaceable tags, without bundling an Excel engine.",
   "main": "dist/cjs/index.js",
   "module": "dist/esm/index.js",
